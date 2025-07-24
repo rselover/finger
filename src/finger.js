@@ -112,6 +112,21 @@ class Finger extends HTMLElement {
         );
 
         this.shadow.appendChild(document.createElement('finger-settings'));
+
+        // --- Keyboard input support ---
+        this._keyboardDrumPatterns = [];
+        this._keyboardSynthPatterns = [];
+        this._keyboardKeyMap = {
+            // Map keys to pattern indices (QWERTY, left = drums, right = synths)
+            // Drums: z x c v b n m
+            'z': 0, 'x': 1, 'c': 2, 'v': 3, 'b': 4, 'n': 5, 'm': 6,
+            // Synths: a s d f g h j
+            'a': 7, 's': 8, 'd': 9, 'f': 10, 'g': 11, 'h': 12, 'j': 13
+        };
+        this._keyboardDown = new Set();
+
+        this._onKeyDown = this._onKeyDown.bind(this);
+        this._onKeyUp = this._onKeyUp.bind(this);
     }
 
     // We're in the DOM
@@ -150,6 +165,94 @@ class Finger extends HTMLElement {
             'synth-channel',
             evt => (this.synthChannel = evt.detail)
         );
+
+        // --- Keyboard listeners ---
+        window.addEventListener('keydown', this._onKeyDown);
+        window.addEventListener('keyup', this._onKeyUp);
+    }
+
+    disconnectedCallback() {
+        // Clean up keyboard listeners
+        window.removeEventListener('keydown', this._onKeyDown);
+        window.removeEventListener('keyup', this._onKeyUp);
+    }
+
+    _onKeyDown(e) {
+        const key = e.key.toLowerCase();
+        if (!this._keyboardKeyMap.hasOwnProperty(key)) return;
+        if (this._keyboardDown.has(key)) return; // Only trigger once per press
+        this._keyboardDown.add(key);
+
+        const patternIdx = this._keyboardKeyMap[key];
+        if (patternIdx < 7) {
+            // Drums
+            if (!this[$drumPlayback]) {
+                this[$drumPlayhead] = 0;
+            }
+            this[$displayInstrument] = 'drum';
+            this[$drumPlayback] = true;
+            this.drumPattern = patternIdx;
+            this._keyboardDrumPatterns.push(this.drumPattern);
+        } else {
+            // Synths
+            if (!this[$synthPlayback]) {
+                this[$synthPlayhead] = 0;
+            }
+            this[$displayInstrument] = 'synth';
+            this[$synthPlayback] = true;
+            this.synthPattern = patternIdx;
+            this._keyboardSynthPatterns.push(this.synthPattern);
+        }
+        this.playback = true;
+    }
+
+    _onKeyUp(e) {
+        const key = e.key.toLowerCase();
+        if (!this._keyboardKeyMap.hasOwnProperty(key)) return;
+        this._keyboardDown.delete(key);
+
+        const patternIdx = this._keyboardKeyMap[key];
+        if (patternIdx < 7) {
+            // Drums
+            const idx = this._keyboardDrumPatterns.lastIndexOf(patternIdx);
+            if (idx !== -1) this._keyboardDrumPatterns.splice(idx, 1);
+
+            if (this._keyboardDrumPatterns.length === 0) {
+                if (this[$activeDrumNotes] !== null) {
+                    this[$activeDrumNotes].forEach(n =>
+                        this[$midi].send(this[$drumChannel], 'noteoff', n, 127)
+                    );
+                }
+                if (this._keyboardSynthPatterns.length === 0) {
+                    this.playback = false;
+                } else {
+                    this[$displayInstrument] = 'synth';
+                }
+                this[$drumPlayback] = false;
+            } else {
+                this.drumPattern = this._keyboardDrumPatterns[this._keyboardDrumPatterns.length - 1];
+            }
+        } else {
+            // Synths
+            const idx = this._keyboardSynthPatterns.lastIndexOf(patternIdx);
+            if (idx !== -1) this._keyboardSynthPatterns.splice(idx, 1);
+
+            if (this._keyboardSynthPatterns.length === 0) {
+                if (this[$activeSynthNotes] !== null) {
+                    this[$activeSynthNotes].forEach(n =>
+                        this[$midi].send(this[$synthChannel], 'noteoff', n, 127)
+                    );
+                }
+                if (this._keyboardDrumPatterns.length === 0) {
+                    this.playback = false;
+                } else {
+                    this[$displayInstrument] = 'drum';
+                }
+                this[$synthPlayback] = false;
+            } else {
+                this.synthPattern = this._keyboardSynthPatterns[this._keyboardSynthPatterns.length - 1];
+            }
+        }
     }
 
     attributeChangedCallback(name, oldVal, newVal) {
