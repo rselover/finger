@@ -2,22 +2,18 @@
 
 ## Try it out!
 
-[https://finger.sampi.io](https://finger.sampi.io/)
-
-## YouTube video
-
-[![YouTube demo](https://img.youtube.com/vi/AizpaaGNmSk/maxresdefault.jpg)](https://www.youtube.com/watch?v=AizpaaGNmSk)
+[https://github.io/finger/](https://rselover.github.io/finger/)
 
 ## Quick start instructions
 
-1. Plug an OP-Z into your computer or Android phone
-2. Open https://finger.sampi.io in Google Chrome
+1. Plug an OP-Z into your computer or Android phone [Currently configured to Midi Channel 1, OP-Z might default to 14]
+2. Open https://rselover.github.io/finger/in Google Chrome
 3. Play some notes on the `module` track
 
 ## Instructions
 
 You can control the sequencer by connecting one or more MIDI devices to your computer.
-Input will be taken from every connected MIDI device on the control channel _(default: MIDI channel 14)_,
+Input will be taken from every connected MIDI device on the control channel _(default: MIDI channel 1)_,
 Output will be sent to two separate channels for drums _(default: MIDI channel 1)_ and synths _(default: MIDI channel 8)_.
 
 Best used with an OP-Z, the left half of the musical keyboard will correspond to drum patterns, the right half will control the synth patterns.
