@@ -44,36 +44,6 @@ const [
     Symbol('noteScheduled')
 ];
 
-const [
-    $drumPlayback,
-    $drumPlayhead,
-    $drumPattern,
-    $activeDrumNotes,
-    $drumChannel
-] = [
-    Symbol('drumPlayback'),
-    Symbol('drumPlayhead'),
-    Symbol('drumPattern'),
-    Symbol('activeDrumNotes'),
-    Symbol('drumChannel')
-];
-
-const [
-    $synthPlayback,
-    $synthPlayhead,
-    $synthPattern,
-    $activeSynthNotes,
-    $synthChannel,
-    $synthKeyX
-] = [
-    Symbol('synthPlayback'),
-    Symbol('synthPlayhead'),
-    Symbol('synthPattern'),
-    Symbol('activeSynthNotes'),
-    Symbol('synthChannel'),
-    Symbol('synthKeyX')
-];
-
 class Finger extends HTMLElement {
     static get observedAttributes() {
         return [
@@ -90,6 +60,13 @@ class Finger extends HTMLElement {
         this.attachShadow({ mode: 'open' });
         this.shadowRoot.innerHTML = `<style>${css}</style><slot></slot>`;
 
+        // If you have an SVG template in your HTML, render it here
+        const svgTemplate = document.getElementById('finger-svg');
+        if (svgTemplate) {
+            const svgContent = svgTemplate.content.cloneNode(true);
+            this.shadowRoot.appendChild(svgContent);
+        }
+
         this[$playback] = false;
         this[$hold] = false;
         this[$timer] = null;
@@ -100,19 +77,6 @@ class Finger extends HTMLElement {
         this[$controlChannel] = 1;
         this[$resizeTimeout] = null;
         this[$noteScheduled] = {};
-
-        this[$drumPlayback] = false;
-        this[$drumPlayhead] = 0;
-        this[$drumPattern] = 0;
-        this[$activeDrumNotes] = new Set();
-        this[$drumChannel] = 10;
-
-        this[$synthPlayback] = false;
-        this[$synthPlayhead] = 0;
-        this[$synthPattern] = 0;
-        this[$activeSynthNotes] = new Set();
-        this[$synthChannel] = 1;
-        this[$synthKeyX] = 0;
 
         this._initMIDI();
     }
