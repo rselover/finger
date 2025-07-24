@@ -119,3 +119,12 @@ export default class MIDI {
 	 */
 	noteoff(channel, note) {}
 }
+
+/** MIDI message handler */
+
+noteon(channel, note) {
+    console.log('Note ON:', channel, note);
+}
+noteoff(channel, note) {
+    console.log('Note OFF:', channel, note);
+}
