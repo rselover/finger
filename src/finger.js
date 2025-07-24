@@ -83,14 +83,15 @@ class Finger extends HTMLElement {
 
 		this._printWelcomeText();
 
-    import('https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js').then(Tone => {
-        this._toneSynth = new Tone.PolySynth().toDestination();
-        this._toneDrum = new Tone.MembraneSynth().toDestination();
-        this._toneLoaded = true;
-    }).catch(e => {
-        console.warn("Tone.js failed to load", e);
-        this._toneLoaded = false;
-    });
+import('https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js').then(Tone => {
+    const ToneNS = Tone.default || Tone;
+    this._toneSynth = new ToneNS.PolySynth().toDestination();
+    this._toneDrum = new ToneNS.MembraneSynth().toDestination();
+    this._toneLoaded = true;
+}).catch(e => {
+    console.warn("Tone.js failed to load", e);
+    this._toneLoaded = false;
+});
 
 		// Set some defaults
 		this[$playback] = false;
