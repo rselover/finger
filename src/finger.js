@@ -74,8 +74,6 @@ const [
 	Symbol('synthKeyX')
 ];
 
-const synth = new window.Tone.PolySynth().toDestination();
-
 class Finger extends HTMLElement {
 	static get observedAttributes() {
 		return ['control-channel', 'drum-channel', 'synth-channel', 'bpm'];
@@ -84,6 +82,13 @@ class Finger extends HTMLElement {
 		super();
 
 		this._printWelcomeText();
+
+        if (window.Tone) {
+            this._toneSynth = new window.Tone.PolySynth().toDestination();
+            this._toneDrum = new window.Tone.MembraneSynth().toDestination();
+        } else {
+            console.warn("Tone.js not loaded!");
+        }
 
 		// Set some defaults
 		this[$playback] = false;
@@ -371,71 +376,80 @@ class Finger extends HTMLElement {
 	 * @param  {int|Array} notes
 	 */
 	_playSynthNotes(notes) {
-		// Reset the synth UI
-		this._updatePatternUI();
-		this._resetSynths();
+    // Reset the synth UI
+    this._updatePatternUI();
+    this._resetSynths();
 
-		const notesArr = asArrayLike(notes);
+    const notesArr = asArrayLike(notes);
+    const midi = this[$midi];
 
-		const midi = this[$midi];
+    // Stop playing the previous notes
+    if (this[$activeSynthNotes] !== null) {
+        midi.send(
+            this[$synthChannel],
+            'noteoff',
+            this[$activeSynthNotes][0],
+            127
+        );
+        if (this[$activeSynthNotes][1]) {
+            midi.send(
+                this[$synthChannel],
+                'noteoff',
+                this[$activeSynthNotes][1],
+                127
+            );
+        }
+    }
 
-		// Stop playing the previous notes
-		if (this[$activeSynthNotes] !== null) {
-			midi.send(
-				this[$synthChannel],
-				'noteoff',
-				this[$activeSynthNotes][0],
-				127
-			);
-			if (this[$activeSynthNotes][1]) {
-				midi.send(
-					this[$synthChannel],
-					'noteoff',
-					this[$activeSynthNotes][1],
-					127
-				);
-			}
-		}
+    // Send new notes to MIDI out
+    if (notes !== null) {
+        midi.send(this[$synthChannel], 'noteon', idxToMidi(notesArr[0]), 127);
+        if (notesArr[1]) {
+            midi.send(this[$synthChannel], 'noteon', idxToMidi(notesArr[1]), 127);
+        }
+    } else {
+        // Stay idle if no notes should be played
+        this[$activeSynthNotes] = null;
+        return this._idleSynths();
+    }
 
-		// Send new notes to MIDI out
-		if (notes !== null) {
-			midi.send(this[$synthChannel], 'noteon', idxToMidi(notesArr[0]), 127);
-			if (notesArr[1]) {
-				midi.send(this[$synthChannel], 'noteon', idxToMidi(notesArr[1]), 127);
-			}
-		} else {
-			// Stay idle if no notes should be played
-			this[$activeSynthNotes] = null;
-			return this._idleSynths();
-		}
+    // --- Tone.js synth playback ---
+    if (window.Tone && this._toneSynth && notes !== null) {
+        // Resume audio context if needed
+        if (window.Tone.context.state !== "running") {
+            window.Tone.start();
+        }
+        const midiNotes = notesArr.map(n => window.Tone.Frequency(idxToMidi(n), "midi").toNote());
+        this._toneSynth.triggerAttackRelease(midiNotes, 0.3);
+    }
 
-		// Store played notes, so we can stop them the next time anything is played
-		this[$activeSynthNotes] = [idxToMidi(notesArr[0])];
-		if (notesArr[1]) {
-			this[$activeSynthNotes].push(idxToMidi(notesArr[1]));
-		}
+    // Store played notes, so we can stop them the next time anything is played
+    this[$activeSynthNotes] = [idxToMidi(notesArr[0])];
+    if (notesArr[1]) {
+        this[$activeSynthNotes].push(idxToMidi(notesArr[1]));
+    }
 
-		if (notesArr.length === 1) {
-			// Play single notes with the appropriate hand
-			const relNote = idxToMidi(notesArr[0]) % 12;
-			if (relNote < 6) {
-				this._hide(SYNTH_IDLE_HAND_LEFT);
-				this._hitSynthKey(SYNTH_PLAY_HAND_LEFT, relNote);
-			} else {
-				this._hide(SYNTH_IDLE_HAND_RIGHT);
-				this._hitSynthKey(SYNTH_PLAY_HAND_RIGHT, relNote);
-			}
-		} else {
-			// Play multiple notes with two hands
-			this._hide([SYNTH_IDLE_HAND_LEFT, SYNTH_IDLE_HAND_RIGHT]);
-			const relNotesArr = [
-				idxToMidi(notesArr[0]) % 12,
-				idxToMidi(notesArr[1]) % 12
-			];
-			this._hitSynthKey(SYNTH_PLAY_HAND_LEFT, Math.min(...relNotesArr));
-			this._hitSynthKey(SYNTH_PLAY_HAND_RIGHT, Math.max(...relNotesArr));
-		}
-	}
+    if (notesArr.length === 1) {
+        // Play single notes with the appropriate hand
+        const relNote = idxToMidi(notesArr[0]) % 12;
+        if (relNote < 6) {
+            this._hide(SYNTH_IDLE_HAND_LEFT);
+            this._hitSynthKey(SYNTH_PLAY_HAND_LEFT, relNote);
+        } else {
+            this._hide(SYNTH_IDLE_HAND_RIGHT);
+            this._hitSynthKey(SYNTH_PLAY_HAND_RIGHT, relNote);
+        }
+    } else {
+        // Play multiple notes with two hands
+        this._hide([SYNTH_IDLE_HAND_LEFT, SYNTH_IDLE_HAND_RIGHT]);
+        const relNotesArr = [
+            idxToMidi(notesArr[0]) % 12,
+            idxToMidi(notesArr[1]) % 12
+        ];
+        this._hitSynthKey(SYNTH_PLAY_HAND_LEFT, Math.min(...relNotesArr));
+        this._hitSynthKey(SYNTH_PLAY_HAND_RIGHT, Math.max(...relNotesArr));
+    }
+}
 
 	/**
 	 * Animate hitting a key with a hand
@@ -478,82 +492,92 @@ class Finger extends HTMLElement {
 	 * @param  {int|Array} notes
 	 */
 	_playDrumNotes(notes) {
-		// Reset the drums UI
-		this._updatePatternUI();
-		this._resetDrums();
+    // Reset the drums UI
+    this._updatePatternUI();
+    this._resetDrums();
 
-		const notesArr = asArrayLike(notes);
+    const notesArr = asArrayLike(notes);
+    const midi = this[$midi];
 
-		const midi = this[$midi];
+    // Stop playing the previous notes
+    if (this[$activeDrumNotes] !== null) {
+        midi.send(this[$drumChannel], 'noteoff', this[$activeDrumNotes][0], 127);
+        if (this[$activeDrumNotes][1]) {
+            midi.send(
+                this[$drumChannel],
+                'noteoff',
+                this[$activeDrumNotes][1],
+                127
+            );
+        }
+    }
 
-		// Stop playing the previous notes
-		if (this[$activeDrumNotes] !== null) {
-			midi.send(this[$drumChannel], 'noteoff', this[$activeDrumNotes][0], 127);
-			if (this[$activeDrumNotes][1]) {
-				midi.send(
-					this[$drumChannel],
-					'noteoff',
-					this[$activeDrumNotes][1],
-					127
-				);
-			}
-		}
+    // Send new notes to MIDI out
+    if (notes !== null) {
+        midi.send(this[$drumChannel], 'noteon', idxToMidi(notesArr[0]), 127);
+        if (notesArr[1]) {
+            midi.send(this[$drumChannel], 'noteon', idxToMidi(notesArr[1]), 127);
+        }
+    }
 
-		// Send new notes to MIDI out
-		if (notes !== null) {
-			midi.send(this[$drumChannel], 'noteon', idxToMidi(notesArr[0]), 127);
-			if (notesArr[1]) {
-				midi.send(this[$drumChannel], 'noteon', idxToMidi(notesArr[1]), 127);
-			}
-		}
+    // --- Tone.js drum playback ---
+    if (window.Tone && this._toneDrum && notes !== null) {
+        if (window.Tone.context.state !== "running") {
+            window.Tone.start();
+        }
+        // Play each drum note as a short "kick" (can be improved for more realism)
+        notesArr.forEach(n => {
+            this._toneDrum.triggerAttackRelease("C2", 0.15);
+        });
+    }
 
-		if (notes === null) {
-			// Stay idle if no notes should be played
-			this[$activeDrumNotes] = null;
-			return this._idleDrums();
-		}
+    if (notes === null) {
+        // Stay idle if no notes should be played
+        this[$activeDrumNotes] = null;
+        return this._idleDrums();
+    }
 
-		// Store played notes, so we can stop them the next time anything is played
-		this[$activeDrumNotes] = [idxToMidi(notesArr[0])];
-		if (notesArr[1]) {
-			this[$activeDrumNotes].push(idxToMidi(notesArr[1]));
-		}
+    // Store played notes, so we can stop them the next time anything is played
+    this[$activeDrumNotes] = [idxToMidi(notesArr[0])];
+    if (notesArr[1]) {
+        this[$activeDrumNotes].push(idxToMidi(notesArr[1]));
+    }
 
-		// Show the appropriate state in the UI
-		const note0 = drum[notesArr[0] % drum.length];
-		const note1 = drum[notesArr[1] % drum.length] || note0;
+    // Show the appropriate state in the UI
+    const note0 = drum[notesArr[0] % drum.length];
+    const note1 = drum[notesArr[1] % drum.length] || note0;
 
-		this._show(FACE(note0.face));
+    this._show(FACE(note0.face));
 
-		const layer0 = note0.layer;
-		this._show(layer0);
-		this._toggle(layer0, c.CLASS_HIT, true);
+    const layer0 = note0.layer;
+    this._show(layer0);
+    this._toggle(layer0, c.CLASS_HIT, true);
 
-		const hideLeftHand = !(
-			note0.hands.includes(c.SIDE_LEFT) && note1.hands.includes(c.SIDE_LEFT)
-		);
-		this._toggle(DRUM_HAND_LEFT, c.CLASS_HIDDEN, hideLeftHand);
+    const hideLeftHand = !(
+        note0.hands.includes(c.SIDE_LEFT) && note1.hands.includes(c.SIDE_LEFT)
+    );
+    this._toggle(DRUM_HAND_LEFT, c.CLASS_HIDDEN, hideLeftHand);
 
-		const hideRightHand = !(
-			note0.hands.includes(c.SIDE_RIGHT) && note1.hands.includes(c.SIDE_RIGHT)
-		);
-		this._toggle(DRUM_HAND_RIGHT, c.CLASS_HIDDEN, hideRightHand);
+    const hideRightHand = !(
+        note0.hands.includes(c.SIDE_RIGHT) && note1.hands.includes(c.SIDE_RIGHT)
+    );
+    this._toggle(DRUM_HAND_RIGHT, c.CLASS_HIDDEN, hideRightHand);
 
-		const hideCowbell = note0.cowbell === false || note1.cowbell === false;
-		this._toggle(COWBELL, c.CLASS_HIDDEN, hideCowbell);
+    const hideCowbell = note0.cowbell === false || note1.cowbell === false;
+    this._toggle(COWBELL, c.CLASS_HIDDEN, hideCowbell);
 
-		// When two notes are played, only show both
-		// if the gorilla can pull it off
-		if (
-			note0.hands === 'lr' ||
-			note1.hands === 'lr' ||
-			(note0.cowbell === false || note1.cowbell === false)
-		) {
-			const layer1 = note1.layer;
-			this._show(layer1);
-			this._toggle(layer1, c.CLASS_HIT, true);
-		}
-	}
+    // When two notes are played, only show both
+    // if the gorilla can pull it off
+    if (
+        note0.hands === 'lr' ||
+        note1.hands === 'lr' ||
+        (note0.cowbell === false || note1.cowbell === false)
+    ) {
+        const layer1 = note1.layer;
+        this._show(layer1);
+        this._toggle(layer1, c.CLASS_HIT, true);
+    }
+}
 
 	/**
 	 * Reset shared parts of the UI
