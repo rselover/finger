@@ -19,7 +19,7 @@ import css from './finger.css.js';
 import * as c from './constants.js';
 import { asArrayLike, stringBool } from './utils.js';
 
-// Wait for Magenta.js to be loaded before defining the custom element
+// Wait for Magenta.js and DOMContentLoaded before defining the custom element
 function defineFingerSequencerWhenReady() {
     if (!window.mm || !window.mm.Player) {
         setTimeout(defineFingerSequencerWhenReady, 50);
@@ -115,9 +115,13 @@ function defineFingerSequencerWhenReady() {
             style.appendChild(document.createTextNode(css));
             this.shadow.appendChild(style);
 
-            this.shadow.appendChild(
-                document.getElementById('finger-svg').content.cloneNode(true)
-            );
+            // --- SVG template robust handling ---
+            const svgTemplate = document.getElementById('finger-svg');
+            if (svgTemplate && svgTemplate.content) {
+                this.shadow.appendChild(svgTemplate.content.cloneNode(true));
+            } else {
+                console.error('SVG template with id "finger-svg" not found!');
+            }
 
             this.shadow.appendChild(document.createElement('finger-settings'));
 
@@ -141,9 +145,7 @@ function defineFingerSequencerWhenReady() {
             this._magentaDrum = new mm.Player();
         }
 
-        // We're in the DOM
         connectedCallback() {
-            // Reset the UI
             this._resetUI();
 
             this._resetDrums();
@@ -154,7 +156,6 @@ function defineFingerSequencerWhenReady() {
 
             this._updatePatternUI();
 
-            // Resize the settings bar and the SVG together
             setTimeout(() => this._sendSettingSizing());
             window.addEventListener('resize', () => {
                 clearTimeout(this[$resizeTimeout]);
@@ -163,7 +164,6 @@ function defineFingerSequencerWhenReady() {
                 }, 100);
             });
 
-            // Adjust the MIDI channels if they are sent from the settings
             const settings = this.shadow.querySelector('finger-settings');
             settings.addEventListener(
                 'drum-channel',
@@ -178,13 +178,11 @@ function defineFingerSequencerWhenReady() {
                 evt => (this.synthChannel = evt.detail)
             );
 
-            // --- Keyboard listeners ---
             window.addEventListener('keydown', this._onKeyDown);
             window.addEventListener('keyup', this._onKeyUp);
         }
 
         disconnectedCallback() {
-            // Clean up keyboard listeners
             window.removeEventListener('keydown', this._onKeyDown);
             window.removeEventListener('keyup', this._onKeyUp);
         }
@@ -192,12 +190,11 @@ function defineFingerSequencerWhenReady() {
         _onKeyDown(e) {
             const key = e.key.toLowerCase();
             if (!this._keyboardKeyMap.hasOwnProperty(key)) return;
-            if (this._keyboardDown.has(key)) return; // Only trigger once per press
+            if (this._keyboardDown.has(key)) return;
             this._keyboardDown.add(key);
 
             const patternIdx = this._keyboardKeyMap[key];
             if (patternIdx < 7) {
-                // Drums
                 if (!this[$drumPlayback]) {
                     this[$drumPlayhead] = 0;
                 }
@@ -206,7 +203,6 @@ function defineFingerSequencerWhenReady() {
                 this.drumPattern = patternIdx;
                 this._keyboardDrumPatterns.push(this.drumPattern);
             } else {
-                // Synths
                 if (!this[$synthPlayback]) {
                     this[$synthPlayhead] = 0;
                 }
@@ -225,7 +221,6 @@ function defineFingerSequencerWhenReady() {
 
             const patternIdx = this._keyboardKeyMap[key];
             if (patternIdx < 7) {
-                // Drums
                 const idx = this._keyboardDrumPatterns.lastIndexOf(patternIdx);
                 if (idx !== -1) this._keyboardDrumPatterns.splice(idx, 1);
 
@@ -245,7 +240,6 @@ function defineFingerSequencerWhenReady() {
                     this.drumPattern = this._keyboardDrumPatterns[this._keyboardDrumPatterns.length - 1];
                 }
             } else {
-                // Synths
                 const idx = this._keyboardSynthPatterns.lastIndexOf(patternIdx);
                 if (idx !== -1) this._keyboardSynthPatterns.splice(idx, 1);
 
@@ -268,7 +262,6 @@ function defineFingerSequencerWhenReady() {
         }
 
         attributeChangedCallback(name, oldVal, newVal) {
-            // Replace `something-name` with `somethingName`
             name = name.replace(/-([a-z])/g, function(g) {
                 return g[1].toUpperCase();
             });
@@ -939,4 +932,10 @@ function defineFingerSequencerWhenReady() {
 
     customElements.define('finger-sequencer', Finger);
 }
-defineFingerSequencerWhenReady();
+
+// --- Wait for DOMContentLoaded before running defineFingerSequencerWhenReady ---
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', defineFingerSequencerWhenReady);
+} else {
+    defineFingerSequencerWhenReady();
+}
