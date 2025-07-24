@@ -109,17 +109,4 @@ export default class MIDI {
                 this.noteTimestamp
             );
         }
-    }
-    /**
-     * Called when receiving a noteon message
-     */
-    noteon(channel, note) {
-        console.log('Note ON:', channel, note);
-    }
-    /**
-     * Called when receiving a noteoff message
-     */
-    noteoff(channel, note) {
-        console.log('Note OFF:', channel, note);
-	}
 }
