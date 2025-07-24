@@ -379,6 +379,10 @@ import('https://cdn.jsdelivr.net/npm/tone@14.8.49/+esm').then(Tone => {
 	 * @param  {int|Array} notes
 	 */
 	_playSynthNotes(notes) {
+            // Resume Tone.js AudioContext if needed
+    if (this._Tone && this._Tone.context && this._Tone.context.state !== "running") {
+        this._Tone.start();
+    }
     // Reset the synth UI
     this._updatePatternUI();
     this._resetSynths();
@@ -495,6 +499,10 @@ import('https://cdn.jsdelivr.net/npm/tone@14.8.49/+esm').then(Tone => {
 	 * @param  {int|Array} notes
 	 */
 	_playDrumNotes(notes) {
+            // Resume Tone.js AudioContext if needed
+    if (this._Tone && this._Tone.context && this._Tone.context.state !== "running") {
+        this._Tone.start();
+    }
     // Reset the drums UI
     this._updatePatternUI();
     this._resetDrums();
