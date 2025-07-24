@@ -235,19 +235,23 @@ class Finger extends HTMLElement {
 	 * Set the BPM
 	 * @param  {int|string} bpm
 	 */
+
 	set bpm(bpm) {
-		if (Math.abs(parseFloat(this[$bpm]) - parseFloat(bpm)) > Number.EPSILON) {
-			this[$bpm] = parseFloat(bpm);
-			this[$stepDuration] = 60.0 / this[$bpm] / 4.0;
-			this.setAttribute('bpm', parseFloat(bpm));
-			this.shadow
-				.querySelector('svg')
-				.style.setProperty('--beat-s', this[$stepDuration] + 's');
-			this.shadow
-				.querySelector('finger-settings')
-				.setAttribute('step-duration', this[$stepDuration]);
-		}
-	}
+        if (Math.abs(parseFloat(this[$bpm]) - parseFloat(bpm)) > Number.EPSILON) {
+            this[$bpm] = parseFloat(bpm);
+            this[$stepDuration] = 60.0 / this[$bpm] / 4.0;
+            this.setAttribute('bpm', parseFloat(bpm));
+            const svg = this.shadow.querySelector('svg');
+            if (svg) {
+                svg.style.setProperty('--beat-s', this[$stepDuration] + 's');
+            }
+            const settings = this.shadow.querySelector('finger-settings');
+            if (settings) {
+                settings.setAttribute('step-duration', this[$stepDuration]);
+            }
+        }
+    }
+
 	get bpm() {
 		return this[$bpm];
 	}
@@ -564,7 +568,14 @@ class Finger extends HTMLElement {
 			'#octdown',
 			'#octup'
 		]);
-		this._toggle('#hold', c.CLASS_FADED, true);
+		this._toggle(selector, className, force) {
+    asArrayLike(selector).forEach(s => {
+        const el = this.shadow.querySelector(s);
+        if (el) {
+            el.classList.toggle(className, force);
+        }
+    });
+}
 	}
 
 	/**
@@ -859,18 +870,20 @@ class Finger extends HTMLElement {
 		});
 	}
 
-	_sendSettingSizing() {
-		const holdRect = this.shadow.querySelector('#hold').getBoundingClientRect();
-		const drumRect = this.shadow.querySelector('#drum').getBoundingClientRect();
-
-		const settingsStyle = this.shadow.querySelector('finger-settings').style;
-		settingsStyle.setProperty('--settings-height', `${holdRect.height}px`);
-		settingsStyle.setProperty('--settings-width', `${drumRect.width}px`);
-
-		this.shadow
-			.querySelector('svg')
-			.style.setProperty('--settings-height', `${holdRect.height}px`);
-	}
+_sendSettingSizing() {
+    const hold = this.shadow.querySelector('#hold');
+    const drum = this.shadow.querySelector('#drum');
+    const settings = this.shadow.querySelector('finger-settings');
+    const svg = this.shadow.querySelector('svg');
+    if (hold && drum && settings && svg) {
+        const holdRect = hold.getBoundingClientRect();
+        const drumRect = drum.getBoundingClientRect();
+        const settingsStyle = settings.style;
+        settingsStyle.setProperty('--settings-height', `${holdRect.height}px`);
+        settingsStyle.setProperty('--settings-width', `${drumRect.width}px`);
+        svg.style.setProperty('--settings-height', `${holdRect.height}px`);
+    }
+}
 
 	_printWelcomeText() {
 		console.log(
@@ -928,7 +941,7 @@ class Finger extends HTMLElement {
 		console.log('Have fun playing!');
 		console.log('');
 		console.log(
-			'%cMade by: %cDaniel Spitzer - %cgithub.com/sampi',
+			'%cMade by: %cRob Selover - %cgithub.com/rselover',
 			'color: grey',
 			'color: slate',
 			'color: grey'
