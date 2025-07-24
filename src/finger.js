@@ -84,6 +84,7 @@ class Finger extends HTMLElement {
 		this._printWelcomeText();
 
 import('https://cdn.jsdelivr.net/npm/tone@14.8.49/+esm').then(Tone => {
+    this._Tone = Tone;
     this._toneSynth = new Tone.PolySynth().toDestination();
     this._toneDrum = new Tone.MembraneSynth().toDestination();
     this._toneLoaded = true;
