@@ -19,9 +19,6 @@ import css from './finger.css.js';
 import * as c from './constants.js';
 import { asArrayLike, stringBool } from './utils.js';
 
-// --- Magenta.js import ---
-import * as mm from '@magenta/music/es6';
-
 // Private symbols to not expose every variable to the outside
 const [
     $playback,
