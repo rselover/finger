@@ -855,11 +855,14 @@ class Finger extends HTMLElement {
 	 * classList.toggle shorthand
 	 * @param  {string|Array} selector
 	 */
-	_toggle(selector, className, force) {
-		asArrayLike(selector).forEach(s => {
-			this.shadow.querySelector(s).classList.toggle(className, force);
-		});
-	}
+_toggle(selector, className, force) {
+    asArrayLike(selector).forEach(s => {
+        const el = this.shadow.querySelector(s);
+        if (el) {
+            el.classList.toggle(className, force);
+        }
+    });
+}
 
 _sendSettingSizing() {
     const hold = this.shadow.querySelector('#hold');
