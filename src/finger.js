@@ -58,14 +58,18 @@ class Finger extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
-        this.shadowRoot.innerHTML = `<style>${css}</style><slot></slot>`;
 
-        // If you have an SVG template in your HTML, render it here
+        // Render the SVG from the template into the shadow DOM, if present
+        let svgMarkup = '';
         const svgTemplate = document.getElementById('finger-svg');
         if (svgTemplate) {
-            const svgContent = svgTemplate.content.cloneNode(true);
-            this.shadowRoot.appendChild(svgContent);
+            const tempDiv = document.createElement('div');
+            tempDiv.appendChild(svgTemplate.content.cloneNode(true));
+            svgMarkup = tempDiv.innerHTML;
         }
+
+        // Render CSS and SVG/UI markup
+        this.shadowRoot.innerHTML = `<style>${css}</style>${svgMarkup}`;
 
         this[$playback] = false;
         this[$hold] = false;
