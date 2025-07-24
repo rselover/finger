@@ -92,7 +92,7 @@ class Finger extends HTMLElement {
         this[$synthPattern] = 0;
         this[$activeDrumNotes] = null;
         this[$activeSynthNotes] = null;
-        this[$controlChannel] = 14; // <-- Set to 14 for default
+        this[$controlChannel] = 1; // <-- Set to 14 for default
         this[$drumChannel] = 1;
         this[$synthChannel] = 2;
         this[$displayInstrument] = 'drum';
