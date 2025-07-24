@@ -568,7 +568,7 @@ class Finger extends HTMLElement {
 			'#octdown',
 			'#octup'
 		]);
-
+    }
 	/**
 	 * Reset the piano keys UI
 	 */
