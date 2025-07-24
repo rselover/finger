@@ -568,15 +568,6 @@ class Finger extends HTMLElement {
 			'#octdown',
 			'#octup'
 		]);
-		this._toggle(selector, className, force) {
-    asArrayLike(selector).forEach(s => {
-        const el = this.shadow.querySelector(s);
-        if (el) {
-            el.classList.toggle(className, force);
-        }
-    });
-}
-	}
 
 	/**
 	 * Reset the piano keys UI
