@@ -421,12 +421,12 @@ import('https://cdn.jsdelivr.net/npm/tone@14.8.49/+esm').then(Tone => {
     }
 
     // --- Tone.js synth playback ---
-    if (window.Tone && this._toneSynth && notes !== null) {
+    if (this.Tone && this._toneSynth && notes !== null) {
         // Resume audio context if needed
-        if (window.Tone.context.state !== "running") {
-            window.Tone.start();
+        if (this.Tone.context.state !== "running") {
+            this.Tone.start();
         }
-        const midiNotes = notesArr.map(n => window.Tone.Frequency(idxToMidi(n), "midi").toNote());
+        const midiNotes = notesArr.map(n => this.Tone.Frequency(idxToMidi(n), "midi").toNote());
         this._toneSynth.triggerAttackRelease(midiNotes, 0.3);
     }
 
@@ -532,9 +532,9 @@ import('https://cdn.jsdelivr.net/npm/tone@14.8.49/+esm').then(Tone => {
     }
 
     // --- Tone.js drum playback ---
-    if (window.Tone && this._toneDrum && notes !== null) {
-        if (window.Tone.context.state !== "running") {
-            window.Tone.start();
+    if (this.Tone && this._toneDrum && notes !== null) {
+        if (this.Tone.context.state !== "running") {
+            this.Tone.start();
         }
         // Play each drum note as a short "kick" (can be improved for more realism)
         notesArr.forEach(n => {
