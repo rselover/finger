@@ -1,6 +1,6 @@
 if (!navigator.serviceWorker.controller) {
 	//Register the ServiceWorker
-	navigator.serviceWorker.register('/sw.js', {
+	navigator.serviceWorker.register('sw.js', {
 		scope: './'
 	});
 }
