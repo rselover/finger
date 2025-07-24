@@ -200,4 +200,4 @@ class Finger extends HTMLElement {
     }
 }
 
-customElements.define('finger-sequencer',
+customElements.define('finger-sequencer', Finger);
