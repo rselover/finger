@@ -19,6 +19,9 @@ import css from './finger.css.js';
 import * as c from './constants.js';
 import { asArrayLike, stringBool } from './utils.js';
 
+// --- Magenta.js import ---
+import * as mm from '@magenta/music/es6';
+
 // Private symbols to not expose every variable to the outside
 const [
     $playback,
@@ -127,6 +130,10 @@ class Finger extends HTMLElement {
 
         this._onKeyDown = this._onKeyDown.bind(this);
         this._onKeyUp = this._onKeyUp.bind(this);
+
+        // --- Magenta.js synth setup ---
+        this._magentaSynth = new mm.Player();
+        this._magentaDrum = new mm.Player();
     }
 
     // We're in the DOM
@@ -506,6 +513,19 @@ class Finger extends HTMLElement {
             return this._idleSynths();
         }
 
+        // --- Magenta.js synth playback ---
+        if (notes !== null) {
+            notesArr.forEach(n => {
+                const midiNum = idxToMidi(n);
+                const noteSeq = {
+                    notes: [{ pitch: midiNum, startTime: 0, endTime: 0.3 }],
+                    totalTime: 0.3
+                };
+                this._magentaSynth.stop();
+                this._magentaSynth.start(noteSeq);
+            });
+        }
+
         // Store played notes, so we can stop them the next time anything is played
         this[$activeSynthNotes] = [idxToMidi(notesArr[0])];
         if (notesArr[1]) {
@@ -602,6 +622,19 @@ class Finger extends HTMLElement {
             if (notesArr[1]) {
                 midi.send(this[$drumChannel], 'noteon', idxToMidi(notesArr[1]), 127);
             }
+        }
+
+        // --- Magenta.js drum playback ---
+        if (notes !== null) {
+            notesArr.forEach(n => {
+                const midiNum = idxToMidi(n);
+                const drumNote = {
+                    notes: [{ pitch: midiNum, isDrum: true, startTime: 0, endTime: 0.2 }],
+                    totalTime: 0.2
+                };
+                this._magentaDrum.stop();
+                this._magentaDrum.start(drumNote);
+            });
         }
 
         if (notes === null) {
