@@ -20,7 +20,7 @@ import * as c from './constants.js';
 import { asArrayLike, stringBool } from './utils.js';
 
 // --- Tone.js import for browser synth support ---
-import * as Tone from 'tone';
+import * as Tone from "https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js";
 
 // Wait for DOMContentLoaded before defining the custom element
 function defineFingerSequencerWhenReady() {
