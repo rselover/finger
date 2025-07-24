@@ -124,6 +124,23 @@ import('https://cdn.jsdelivr.net/npm/tone@14.8.49/+esm').then(Tone => {
 		this.shadow.appendChild(document.createElement('finger-settings'));
 	}
 
+    // Debug
+    debugStart({drum = 0, synth = 7, both = false} = {}) {
+    this.drumPattern = drum;
+    this.synthPattern = synth;
+    this.playback = true;
+    if (both) {
+        this[$drumPlayback] = true;
+        this[$synthPlayback] = true;
+        this[$displayInstrument] = 'drum';
+    } else {
+        this[$drumPlayback] = true;
+        this[$synthPlayback] = false;
+        this[$displayInstrument] = 'drum';
+    }
+    this._updatePatternUI();
+}
+
 	// We're in the DOM
 	connectedCallback() {
 		// Reset the UI
