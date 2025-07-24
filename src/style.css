@@ -1,6 +1,6 @@
 @font-face {
 	font-family: 'OP-1';
-	src: url('fonts/OP-1.woff') format('woff');
+	src: url('../fonts/OP-1.woff') format('woff');
 	font-weight: normal;
 	font-style: normal;
 }
