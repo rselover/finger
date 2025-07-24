@@ -45,6 +45,7 @@ export default class MIDI {
             alert(
                 "Web MIDI API not supported, I haven't coded computer keyboard controls yet..."
             );
+            }
         }
     }
     success(midi) {
