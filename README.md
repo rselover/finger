@@ -2,12 +2,12 @@
 
 ## Try it out!
 
-[https://github.io/finger/](https://rselover.github.io/finger/)
+[https://rselover.github.io/finger/](https://rselover.github.io/finger/)
 
 ## Quick start instructions
 
 1. Plug an OP-Z into your computer or Android phone [Currently configured to Midi Channel 1, OP-Z might default to 14]
-2. Open https://rselover.github.io/finger/in Google Chrome
+2. Open https://rselover.github.io/finger/ in Google Chrome
 3. Play some notes on the `module` track
 
 ## Instructions
