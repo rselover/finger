@@ -45,7 +45,6 @@ export default class MIDI {
             alert(
                 "Web MIDI API not supported, I haven't coded computer keyboard controls yet..."
             );
-            }
         }
     }
     success(midi) {
@@ -110,4 +109,17 @@ export default class MIDI {
                 this.noteTimestamp
             );
         }
+    }
+    /**
+     * Called when receiving a noteon message
+     */
+    noteon(channel, note) {
+        // To be overridden by user
+    }
+    /**
+     * Called when receiving a noteoff message
+     */
+    noteoff(channel, note) {
+        // To be overridden by user
+    }
 }
