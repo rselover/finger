@@ -177,6 +177,9 @@ import('https://cdn.jsdelivr.net/npm/tone@14.8.49/+esm').then(Tone => {
 			'synth-channel',
 			evt => (this.synthChannel = evt.detail)
 		);
+
+        window.addEventListener('keydown', this._onKeyDown.bind(this));
+        window.addEventListener('keyup', this._onKeyUp.bind(this));
 	}
 
 	attributeChangedCallback(name, oldVal, newVal) {
@@ -887,6 +890,34 @@ import('https://cdn.jsdelivr.net/npm/tone@14.8.49/+esm').then(Tone => {
 			}
 		};
 	}
+
+    _onKeyDown(e) {
+    // Map keys to MIDI notes (example: A=60, S=62, D=64, F=65, G=67, H=69, J=71, K=72)
+    const keyMap = {
+        'a': 60, // C4
+        's': 62, // D4
+        'd': 64, // E4
+        'f': 65, // F4
+        'g': 67, // G4
+        'h': 69, // A4
+        'j': 71, // B4
+        'k': 72  // C5
+    };
+    const note = keyMap[e.key.toLowerCase()];
+    if (note !== undefined) {
+        this[$midi].noteon(this[$controlChannel], note);
+    }
+}
+
+_onKeyUp(e) {
+    const keyMap = {
+        'a': 60, 's': 62, 'd': 64, 'f': 65, 'g': 67, 'h': 69, 'j': 71, 'k': 72
+    };
+    const note = keyMap[e.key.toLowerCase()];
+    if (note !== undefined) {
+        this[$midi].noteoff(this[$controlChannel], note);
+    }
+}
 
 	/**
 	 * Hide element
